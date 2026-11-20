@@ -1,0 +1,70 @@
+# ROLE & OBJECTIVE
+Act as a Senior Full-Stack Software Architect and Lead Developer. Your task is to design and build a production-ready, multi-tenant B2B SaaS application for Boarding House Management ("Aplikasi Manajemen Kost Multi-Cabang") based strictly on the product specifications below.
+
+# [TECH STACK - Sesuaikan jika diperlukan]
+- **Frontend:** Next.js (App Router) + TypeScript + Tailwind CSS + Lucide Icons (Mobile-First Responsive)
+- **Backend:** Next.js API Routes / Server Actions (atau Python FastAPI / ElysiaJS — gunakan struktur modular REST API yang rapi)
+- **Database & ORM:** PostgreSQL + Prisma ORM (atau Drizzle ORM)
+- **Storage:** Local upload handler (dev) abstracted for S3/Cloudflare R2 (untuk foto KTP, bukti nota pengeluaran, dan foto komplain)
+
+---
+
+# 1. CORE ARCHITECTURE & SECURITY RULES (NON-NEGOTIABLE)
+1. **Strict Multi-Tenancy:** Every database query MUST be isolated by `organization_id` (milik Owner). Data from one kost owner must never leak to another.
+2. **Role-Based Access Control (RBAC):** Implement strict middleware and UI guards for 3 roles:
+   - `OWNER` (Super Admin): Full access across all branches, financial reports, net profit analytics, staff management, expense verification, and audit logs.
+   - `ADMIN_KOST` (Field Operator): Restricted operational access. Can check-in/out tenants, view room payment status, resolve maintenance tickets, and **submit** operational expenses. **STRICTLY BLOCKED** from viewing total revenue, net profit reports, audit logs, or deleting/editing submitted expenses.
+   - `TENANT` (Anak Kost): Access via unique magic-link token (no password/app install required) to view invoices, download receipts, and submit facility complaints.
+3. **Immutable Records & Audit Trail:**
+   - Once `ADMIN_KOST` submits an expense, they **cannot edit or delete it**.
+   - Every critical mutation (create/update/delete/approve/flag/void) must write an entry to `audit_logs` capturing `user_id`, `role`, `action`, `entity_type`, `entity_id`, `metadata` (before/after JSON), and `timestamp`.
+
+---
+
+# 2. DATABASE SCHEMA BLUEPRINT
+Design and generate migrations for the following core entities:
+- `organizations`: `id`, `name`, `subscription_plan` (`STARTER`, `JURAGAN`, `PRO`), `created_at`
+- `users`: `id`, `organization_id`, `name`, `email`, `phone`, `password_hash`, `role` (`OWNER`, `ADMIN_KOST`), `is_active`
+- `properties` (Cabang Kost): `id`, `organization_id`, `name`, `address`, `expense_approval_threshold` (Decimal, default 200000), `late_fee_per_day` (Decimal)
+- `rooms`: `id`, `property_id`, `room_number`, `floor`, `base_price`, `status` (`VACANT`, `OCCUPIED`, `MAINTENANCE`)
+- `tenants`: `id`, `organization_id`, `full_name`, `whatsapp_number`, `ktp_image_url`, `emergency_contact`, `magic_link_token` (unique)
+- `leases` (Kontrak Sewa): `id`, `room_id`, `tenant_id`, `start_date`, `billing_day`, `billing_cycle` (`MONTHLY`, `YEARLY`), `additional_fees` (JSON: e.g., extra person, electronics), `is_active`
+- `invoices`: `id`, `lease_id`, `invoice_number`, `amount`, `late_fee`, `total_amount`, `due_date`, `status` (`UNPAID`, `DUE_SOON`, `OVERDUE`, `PAID`, `VOID`), `paid_at`, `payment_method`
+- `expenses` (Sinkronisasi Pengeluaran Admin -> Owner):
+  - `id`, `property_id`, `room_id` (nullable — diisi jika spesifik kamar, misal Cuci AC Kamar 04), `submitted_by` (user_id), `category` (`LISTRIK`, `AIR`, `CUCI_AC`, `MAINTENANCE`, `KEBERSIHAN`, `OPERASIONAL_LAINNYA`), `amount` (Decimal), `description`, `transaction_date`
+  - `proof_image_url` (String, **REQUIRED / NOT NULL**)
+  - `status` (`PENDING_REVIEW`, `APPROVED`, `FLAGGED`, `VOID`)
+  - `owner_comment` (String, nullable — untuk teguran/klarifikasi Owner ke Admin)
+  - `reviewed_by` (user_id, nullable), `reviewed_at` (DateTime, nullable)
+- `expense_requests` (Pengajuan Dana di atas Threshold): `id`, `property_id`, `requested_by`, `category`, `estimated_amount`, `reason`, `status` (`PENDING`, `APPROVED`, `REJECTED`), `approved_by`
+- `maintenance_tickets`: `id`, `room_id`, `tenant_id`, `title`, `description`, `photo_url`, `status` (`OPEN`, `IN_PROGRESS`, `RESOLVED`), `created_at`, `resolved_at`
+- `audit_logs`: `id`, `organization_id`, `user_id`, `action`, `entity_type`, `entity_id`, `details` (JSON), `created_at`
+
+---
+
+# 3. KEY BUSINESS WORKFLOWS & UI/UX REQUIREMENTS
+1. **Admin-to-Owner Expense Sync (Core USP):**
+   - **Admin UI:** Mobile-first, ultra-simple interface with large touch targets. Form requires category, amount, optional room selector, notes, and **mandatory receipt/work photo upload** (include client-side image compression before upload).
+   - **Real-Time Sync & Net Profit:** Submitting an expense immediately updates the Owner's Cashbook and recalculates **Net Profit** (`Total Paid Invoices - Total Non-Void Expenses`).
+   - **Owner Verification Queue:** Owner sees new expenses marked `PENDING_REVIEW` and can click **Approve**, **Flag (Need Clarification + Comment)**, or **Void**.
+   - **Approval Threshold:** If an Admin tries to log a maintenance expense above `property.expense_approval_threshold`, prompt them to submit an `Expense Request` for Owner approval first.
+2. **Interactive Room Grid Dashboard:**
+   - Visual color-coded grid per property: Green (`VACANT`), Blue (`OCCUPIED - PAID`), Yellow (`DUE_SOON`), Red (`OVERDUE`).
+3. **Owner Executive Analytics:**
+   - Filterable cashflow & expense history by Property Branch, Category (e.g., total AC cleaning & electricity costs), Room Number, and Admin name.
+   - Exportable Financial Report (CSV/PDF-ready view).
+4. **Tenant Magic-Link Portal:**
+   - Public route `/portal/[magic_link_token]` allowing tenants to view billing status, download digital receipts, and submit maintenance tickets with photos.
+
+---
+
+# 4. EXECUTION INSTRUCTIONS (PHASED APPROACH)
+Do NOT try to generate the entire codebase in a single messy response. Follow this strict phased execution plan:
+- **Phase 1:** Initialize project structure, configure environment variables, write the complete database schema/migrations, and create a seed script with realistic dummy data (1 Owner, 2 Branches, 1 Admin Kost, 10 Rooms, sample Tenants, Invoices, and Expenses).
+- **Phase 2:** Implement Authentication, Multi-tenant middleware, RBAC guards, and Audit Log utility.
+- **Phase 3:** Build Property Management, Interactive Room Grid, and Tenant Check-in/Check-out (KYC).
+- **Phase 4:** Build the Admin Expense Input (with mandatory proof & threshold logic) + Owner Real-time Verification Queue & Audit Trail viewer.
+- **Phase 5:** Build Automated Invoice/Billing engine, Tenant Magic-Link Portal, Maintenance Tickets, and Owner Net Profit Dashboard.
+
+**START NOW WITH PHASE 1 ONLY:**
+Inspect the current workspace directory, set up the project scaffolding and database schema, and verify that migrations and seed data are ready. Once Phase 1 is complete, summarize what was built and wait for my confirmation before proceeding to Phase 2.
