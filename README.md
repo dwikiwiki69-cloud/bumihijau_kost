@@ -1,210 +1,143 @@
 # Bumihijau Kost — Aplikasi Manajemen Kost Multi-Cabang
 
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+[![License](https://img.shields.io/badge/License-Proprietary-emerald.svg)]()
+
+Platform B2B SaaS terpadu untuk pengelolaan rumah kost multi-cabang (**Boarding House Management System**) yang menghubungkan **Pemilik Kost (Owner)**, **Admin Lapangan (Operator)**, dan **Penghuni (Anak Kost)** dalam satu ekosistem transparan, anti-bocor biaya, dan efisien.
 
 ---
 
-## 📋 Deskripsi
+## 🎯 Fitur Utama Frontend
 
-**Bumihijau Kost** adalah platform SaaS B2B multi-tenant untuk manajemen properti kost (boarding house) di Indonesia. Dirancang untuk pemilik kost yang memiliki satu atau lebih cabang, platform ini menghadirkan dashboard terpusat, manajemen penghuni, pencatatan keuangan, dan portal mandiri bagi penyewa — semua dalam satu ekosistem yang aman dan skalabel.
+### 1. Interactive Room Grid Dashboard
+- **Visual Color-Coded Grid:**
+  - 🟢 **VACANT (Kosong):** Siap huni dan dapat langsung di-check-in.
+  - 🔵 **OCCUPIED (Terisi - Lunas):** Sewa aktif dengan status lunas.
+  - 🟡 **DUE_SOON (Jatuh Tempo):** Kurang dari 3 hari sebelum batas sewa.
+  - 🔴 **OVERDUE (Menunggak):** Telah melewati batas waktu pembayaran sewa.
+- Filter cepat per cabang kost, status kamar, dan pencarian nomor kamar.
+- Detail kamar pop-up (KYC penyewa, fasilitas kamar, riwayat pembayaran).
 
----
+### 2. Sinkronisasi Pengeluaran Real-Time (Core USP)
+- **Admin Mobile Input Form:**
+  - Pilihan kategori besar: Listrik/Token ⚡, Air 💧, Cuci AC ❄️, Maintenance 🔧, Kebersihan 🧹, Operasional Lainnya 📋.
+  - **MANDATORY Upload Bukti Nota/Struk:** Dilengkapi kompresi otomatis di sisi klien.
+  - **Threshold Guard:** Peringatan otomatis jika nominal pengeluaran `MAINTENANCE` melebihi ambang batas threshold (Rp 200.000) untuk diarahkan ke Form Pengajuan Dana.
+- **Antrean Verifikasi Owner (Verification Queue):**
+  - Owner memvalidasi nota pengeluaran dengan tombol aksi instan: `Setujui`, `Klarifikasi/Flag`, atau `Void`.
+  - Sinkronisasi otomatis ke Buku Kas & Laba Bersih (**Net Profit** = *Total Tagihan Lunas - Total Pengeluaran Approved*).
 
-## ✨ Fitur Utama
+### 3. Portal Mandiri Anak Kost (Magic-Link)
+- Akses publik tanpa perlu install aplikasi maupun password melalui URL unik `/portal/[token]`.
+- Cek rincian invoice sewa bulan berjalan & nomor rekening resmi transfer BCA.
+- Tombol konfirmasi transfer langsung ke WhatsApp Admin.
+- Form pengaduan / komplain fasilitas kamar (AC rusak, kran bocor, dll).
 
-| Fitur | Deskripsi |
-|---|---|
-| 🏠 **Room Grid Dashboard** | Visualisasi grid status kamar (Tersedia / Terisi / Maintenance) secara real-time per cabang |
-| 🔐 **Role-Based Access Control** | Tiga level akses: Owner, Admin Kost, dan Tenant dengan izin granular |
-| 💸 **Expense Sync + Photo Upload** | Pencatatan pengeluaran operasional dengan lampiran bukti foto (S3/R2) |
-| 🔗 **Magic-Link Tenant Portal** | Portal penyewa tanpa password — akses via magic link yang dikirim ke email |
-| 🧾 **Invoice Management** | Pembuatan, pengiriman, dan tracking status pembayaran tagihan sewa |
-| 🔧 **Maintenance Tickets** | Sistem tiket laporan kerusakan dari penyewa hingga resolusi oleh admin |
-| 📊 **Analytics Dashboard** | Grafik pendapatan, tingkat hunian, dan tren pengeluaran per cabang |
-| 🗂️ **Audit Trail** | Log aktivitas lengkap untuk setiap perubahan data penting |
+### 4. Manajemen Tagihan & Invoice
+- Monitoring tagihan bulanan: Lunas, Belum Lunas, dan Menunggak.
+- Tombol integrasi pengingat tagihan instan via WhatsApp (`wa.me` dengan template pesan otomatis).
+- Aksi tandai lunas manual dan filter status tagihan.
 
----
-
-## 🛠️ Tech Stack
-
-| Layer | Teknologi |
-|---|---|
-| **Frontend** | Next.js 14 (App Router), TypeScript, Tailwind CSS, Lucide Icons |
-| **Backend** | Next.js API Routes & Server Actions |
-| **Database** | PostgreSQL + Prisma ORM |
-| **Storage** | S3 / Cloudflare R2 (abstraksi unified) |
-| **Auth** | NextAuth.js (Magic Link + Credentials) |
-| **Deployment** | Vercel (Frontend) + Railway / Supabase (Database) |
-
----
-
-## 👥 Peran & Hak Akses
-
-### 🏢 OWNER
-- Akses penuh ke semua cabang yang dimiliki
-- Melihat laporan keuangan konsolidasi lintas cabang
-- Menambah/menghapus Admin Kost
-- Mengatur paket langganan (subscription tier)
-
-### 👤 ADMIN_KOST
-- Mengelola kamar, penghuni, dan tagihan pada cabang yang ditugaskan
-- Upload bukti pengeluaran operasional
-- Membalas & menutup tiket maintenance
-- Membuat dan mengirim invoice ke penyewa
-
-### 🙋 TENANT
-- Akses portal mandiri via magic link
-- Melihat tagihan dan riwayat pembayaran
-- Mengajukan tiket keluhan/maintenance
-- Mengunduh kwitansi pembayaran
+### 5. Laporan Keuangan & Net Profit
+- Card Laba Bersih interaktif dengan rincian pendapatan vs beban operasional.
+- Grafik visual bar persentase beban pengeluaran per kategori.
+- Tabel cashflow bulanan dan fitur cetak laporan / ekspor CSV.
 
 ---
 
-## 📁 Struktur Proyek
+## 🛡️ Role-Based Access Control (RBAC)
 
-```
-bumihijau_kost/
-├── src/
-│   ├── app/                        # Next.js App Router
-│   │   ├── (auth)/                 # Grup rute autentikasi
-│   │   │   ├── login/
-│   │   │   └── magic-link/
-│   │   ├── (dashboard)/            # Grup rute dashboard (protected)
-│   │   │   ├── layout.tsx
-│   │   │   ├── page.tsx            # Dashboard utama
-│   │   │   ├── rooms/              # Manajemen kamar
-│   │   │   ├── tenants/            # Manajemen penyewa
-│   │   │   ├── invoices/           # Manajemen tagihan
-│   │   │   ├── expenses/           # Pencatatan pengeluaran
-│   │   │   ├── maintenance/        # Tiket maintenance
-│   │   │   └── analytics/          # Dashboard analitik
-│   │   ├── (tenant-portal)/        # Portal penyewa (magic link)
-│   │   │   └── portal/[token]/
-│   │   └── api/                    # API Routes
-│   │       ├── auth/
-│   │       ├── rooms/
-│   │       ├── invoices/
-│   │       ├── expenses/
-│   │       └── webhooks/
-│   ├── components/                 # Komponen UI reusable
-│   │   ├── ui/                     # Komponen dasar (Button, Input, Card)
-│   │   ├── dashboard/              # Komponen spesifik dashboard
-│   │   ├── rooms/                  # Komponen Room Grid
-│   │   └── forms/                  # Form components
-│   ├── lib/                        # Utilitas & konfigurasi
-│   │   ├── prisma.ts               # Prisma client singleton
-│   │   ├── auth.ts                 # NextAuth config
-│   │   ├── storage.ts              # S3/R2 abstraction
-│   │   └── utils.ts                # Helper functions (clsx, etc.)
-│   ├── hooks/                      # Custom React hooks
-│   ├── types/                      # TypeScript type definitions
-│   └── middleware.ts               # Auth middleware (route protection)
-├── prisma/
-│   └── schema.prisma               # Database schema
-├── public/                         # Static assets
-├── .env.example                    # Template environment variables
-├── next.config.ts
-├── tailwind.config.ts
-├── tsconfig.json
-└── package.json
+| Peran (Role) | Ruang Lingkup Hak Akses |
+| :--- | :--- |
+| **OWNER** *(Super Admin)* | Full access seluruh cabang, Laporan Net Profit & Cashflow, antrean verifikasi bukti nota, audit log. |
+| **ADMIN_KOST** *(Field Operator)* | Operasional lapangan, check-in tamu KYC, status kamar, input pengeluaran + foto nota. **Dilarang keras** melihat laba bersih atau mengedit/menghapus pengeluaran yang sudah disubmit. |
+| **TENANT** *(Anak Kost)* | Akses mandiri melalui Magic Link tanpa login untuk cek tagihan, info rekening, dan lapor komplain perbaikan. |
+
+---
+
+## 🏗️ Struktur Direktori Frontend
+
+```text
+src/
+├── app/
+│   ├── (auth)/
+│   │   ├── layout.tsx                # Auth layout
+│   │   └── login/page.tsx            # Login page dengan role demo switcher
+│   ├── (dashboard)/
+│   │   ├── layout.tsx                # Responsive sidebar & navbar layout
+│   │   ├── dashboard/
+│   │   │   ├── page.tsx              # Owner executive overview dashboard
+│   │   │   └── admin/page.tsx        # Admin lapangan mobile dashboard
+│   │   ├── kamar/
+│   │   │   └── page.tsx              # Interactive Room Grid
+│   │   ├── pengeluaran/
+│   │   │   ├── page.tsx              # Owner verification queue & history
+│   │   │   ├── input/page.tsx        # Admin mobile expense input form
+│   │   │   └── request/page.tsx      # Form pengajuan dana di atas threshold
+│   │   ├── tagihan/
+│   │   │   └── page.tsx              # Manajemen invoice & reminder WhatsApp
+│   │   ├── penyewa/
+│   │   │   ├── page.tsx              # Data penghuni aktif
+│   │   │   └── baru/page.tsx         # Check-in tamu baru (KYC)
+│   │   └── laporan/
+│   │       └── page.tsx              # Laporan Net Profit & Cashflow
+│   ├── portal/
+│   │   └── [token]/page.tsx          # Public magic-link tenant portal
+│   ├── layout.tsx                    # Root layout
+│   ├── page.tsx                      # Modern SaaS landing page
+│   └── globals.css                   # Tailwind styling
+├── components/
+│   ├── analytics/                    # NetProfitCard, ExpenseBreakdown
+│   ├── dashboard/                    # StatCard, ActivityFeed
+│   ├── expenses/                     # ExpenseCard
+│   ├── layout/                       # Sidebar, Navbar
+│   ├── rooms/                        # RoomCard, RoomDetailModal
+│   ├── tenants/                      # TenantCard
+│   └── ui/                           # Button, Input, Card
+└── lib/
+    ├── constants.ts                  # Config warna status & kategori
+    ├── mock-data.ts                  # Mock data lengkap (Rooms, Invoices, Expenses)
+    └── utils.ts                      # Helper format rupiah & date
 ```
 
 ---
 
-## 🚀 Memulai (Getting Started)
+## 🚀 Menjalankan Project Lokal
 
-### Prasyarat
+### 1. Prasyarat
+- Node.js versi 18.x atau lebih baru (disarankan Node.js 20+)
+- npm / pnpm / yarn
 
-- Node.js >= 18.x
-- npm >= 9.x (atau pnpm/yarn)
-- PostgreSQL database (lokal atau cloud)
-
-### Instalasi
-
+### 2. Instalasi & Menjalankan Dev Server
 ```bash
-# 1. Clone repositori
+# Clone repository
 git clone https://github.com/dwikiwiki69-cloud/bumihijau_kost.git
 cd bumihijau_kost
 
-# 2. Install dependensi
+# Install dependencies
 npm install
 
-# 3. Salin file environment
-cp .env.example .env.local
-
-# 4. Isi variabel di .env.local (lihat seksi Environment Variables)
-
-# 5. Jalankan migrasi database
-npx prisma migrate dev --name init
-
-# 6. (Opsional) Seed data awal
-npx prisma db seed
-
-# 7. Jalankan development server
+# Jalankan dev server
 npm run dev
 ```
 
-Buka [http://localhost:3000](http://localhost:3000) di browser.
+Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
 
----
-
-## 🔧 Environment Variables
-
-Salin `.env.example` menjadi `.env.local` dan isi nilai berikut:
-
-```env
-# ============================================================
-# DATABASE
-# ============================================================
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/bumihijau_kost?schema=public"
-
-# ============================================================
-# NEXTAUTH
-# ============================================================
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-super-secret-nextauth-secret"
-
-# ============================================================
-# EMAIL (untuk Magic Link — gunakan Resend / SendGrid / SMTP)
-# ============================================================
-EMAIL_SERVER_HOST="smtp.example.com"
-EMAIL_SERVER_PORT=587
-EMAIL_SERVER_USER="no-reply@bumihijaukost.id"
-EMAIL_SERVER_PASSWORD="your-smtp-password"
-EMAIL_FROM="Bumihijau Kost <no-reply@bumihijaukost.id>"
-
-# ============================================================
-# STORAGE (Cloudflare R2 / AWS S3)
-# ============================================================
-STORAGE_ENDPOINT="https://<account-id>.r2.cloudflarestorage.com"
-STORAGE_REGION="auto"
-STORAGE_ACCESS_KEY_ID="your-r2-access-key"
-STORAGE_SECRET_ACCESS_KEY="your-r2-secret-key"
-STORAGE_BUCKET_NAME="bumihijau-kost-uploads"
-STORAGE_PUBLIC_URL="https://cdn.bumihijaukost.id"
-
-# ============================================================
-# APP CONFIG
-# ============================================================
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-NEXT_PUBLIC_APP_NAME="Bumihijau Kost"
-```
+### 3. Route Penting untuk Demo:
+- `/` — Halaman Landing Page Publik
+- `/login` — Halaman Login & Switcher Akses Role
+- `/dashboard` — Dashboard Utama Owner Kost
+- `/dashboard/admin` — Dashboard Lapangan Admin Kost
+- `/kamar` — Interactive Color-Coded Room Grid
+- `/pengeluaran` — Verifikasi Pengeluaran Owner
+- `/pengeluaran/input` — Input Pengeluaran Nota Admin Lapangan
+- `/tagihan` — Daftar Invoice & Pengingat WA
+- `/penyewa/baru` — Check-in Tamu Baru (KYC)
+- `/portal/demo-token-123` — Portal Mandiri Magic-Link Anak Kost
 
 ---
 
 ## 📄 Lisensi
-
-Didistribusikan di bawah lisensi MIT. Lihat [LICENSE](LICENSE) untuk detail lengkap.
-
----
-
-## 🤝 Kontribusi
-
-Pull request sangat disambut! Untuk perubahan besar, harap buka issue terlebih dahulu untuk mendiskusikan apa yang ingin Anda ubah.
-
----
-
-<p align="center">Dibuat dengan ❤️ untuk para pemilik kost Indonesia</p>
+Hak Cipta © 2026 Bumihijau Kost. All rights reserved.
